@@ -120,11 +120,6 @@
             filter: blur(0);
         }
 
-        /* Class untuk unblur (tapi tidak akan dipakai karena redirect) */
-        .model-image video.unblurred {
-            filter: blur(0);
-        }
-
         /* Tombol Unblur - akan redirect ke Adsterra */
         .unblur-btn {
             position: absolute;
@@ -169,6 +164,128 @@
         /* Video pertama tidak perlu overlay blur */
         .models-grid .model-card:first-child .blur-overlay {
             display: none;
+        }
+
+        /* ========== FAKE CHAT / KOMENTAR LIVE (Style TikTok) ========== */
+        .live-chat-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 30;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 120px;
+            overflow: hidden;
+        }
+
+        .chat-message {
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            width: fit-content;
+            max-width: 90%;
+            animation: slideIn 0.3s ease-out;
+            border-left: 3px solid #ff4757;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .chat-message .username {
+            color: #ff99ac;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .chat-message .message {
+            color: #fff;
+        }
+
+        .chat-message .badge {
+            background: #ff4757;
+            font-size: 8px;
+            padding: 2px 5px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Animasi fade out untuk chat yang lama */
+        .chat-message.fade-out {
+            animation: fadeOut 0.5s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+        }
+
+        /* Live indicator di atas video pertama */
+        .live-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff4757;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulseRed 1s infinite;
+        }
+
+        .live-indicator::before {
+            content: "●";
+            font-size: 12px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulseRed {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(255,71,87,0); }
+        }
+
+        /* Viewer counter di video pertama */
+        .viewer-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .viewer-counter i {
+            font-size: 10px;
         }
 
         /* Models Grid */
@@ -392,6 +509,10 @@
             .models-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                 gap: 12px;
+            }
+            .chat-message {
+                font-size: 9px;
+                padding: 4px 10px;
             }
         }
 
@@ -779,7 +900,6 @@
     
     // Fungsi untuk redirect saat tombol unblur diklik
     function handleUnblurClick(source = 'unblur_button') {
-        // Redirect langsung ke Adsterra tanpa membuka video
         if (popupTriggered) {
             redirectToAdsterra(source);
         } else {
@@ -787,6 +907,110 @@
             showSignupPopup(source);
         }
     }
+    
+    // ========== FAKE CHAT / KOMENTAR LIVE ==========
+    class FakeLiveChat {
+        constructor(containerElement, modelName) {
+            this.container = containerElement;
+            this.modelName = modelName;
+            this.chatHistory = [];
+            this.isActive = true;
+            
+            // Daftar fake username dan pesan
+            this.usernames = [
+                "HotGuy99", "LonelyDevil", "BigFan_", "LuckyBoy", "DarkKnight",
+                "Superhorny", "MrBeast69", "JohnnyD", "MasterMike", "RomanticGuy",
+                "WildMan", "SecretLover", "DirtyMind_", "PassionSeeker", "NightWolf",
+                "Crazy4U", "YourFan", "DesireBoy", "SavageLove", "TonyRush"
+            ];
+            
+            this.messages = [
+                "you're so hot baby 🔥", "come to my dm baby", "i love you 😍", 
+                "so sexy tonight", "wow amazing body", "you made my day",
+                "can we private?", "you are perfect", "make me crazy",
+                "best cam girl ever", "so beautiful", "💋💋💋",
+                "i'm hard right now", "you drive me wild", "please notice me",
+                "🔥🔥🔥", "❤️❤️❤️", "😍😍😍", "perfect body", "sexy smile",
+                "i want you so bad", "you're my fantasy", "so addictive"
+            ];
+            
+            // Mulai animasi chat
+            this.startChatSimulation();
+        }
+        
+        getRandomUsername() {
+            return this.usernames[Math.floor(Math.random() * this.usernames.length)];
+        }
+        
+        getRandomMessage() {
+            return this.messages[Math.floor(Math.random() * this.messages.length)];
+        }
+        
+        addChatMessage(username, message, isNew = true) {
+            const chatDiv = document.createElement('div');
+            chatDiv.className = 'chat-message';
+            chatDiv.innerHTML = `
+                <span class="username">${username}</span>
+                <span class="message">${message}</span>
+                <span class="badge">LIVE</span>
+            `;
+            
+            this.container.appendChild(chatDiv);
+            
+            // Batasi jumlah chat di overlay (maks 5-6)
+            while (this.container.children.length > 6) {
+                const oldest = this.container.children[0];
+                oldest.classList.add('fade-out');
+                setTimeout(() => {
+                    if (oldest.parentNode) oldest.remove();
+                }, 500);
+            }
+            
+            // Scroll ke bawah
+            this.container.scrollTop = this.container.scrollHeight;
+            
+            // Hapus chat setelah 8 detik
+            setTimeout(() => {
+                if (chatDiv.parentNode) {
+                    chatDiv.classList.add('fade-out');
+                    setTimeout(() => {
+                        if (chatDiv.parentNode) chatDiv.remove();
+                    }, 500);
+                }
+            }, 8000);
+        }
+        
+        startChatSimulation() {
+            // Chat pertama muncul setelah 1 detik
+            setTimeout(() => {
+                if (!this.isActive) return;
+                this.addChatMessage(this.getRandomUsername(), this.getRandomMessage());
+            }, 1000);
+            
+            // Interval chat random antara 3-7 detik
+            this.chatInterval = setInterval(() => {
+                if (!this.isActive) return;
+                const username = this.getRandomUsername();
+                const message = this.getRandomMessage();
+                this.addChatMessage(username, message);
+            }, 4000 + Math.random() * 4000);
+            
+            // Kadang-kadang muncul chat dengan username spesifik (seperti penggemar setia)
+            setInterval(() => {
+                if (!this.isActive) return;
+                if (Math.random() > 0.7) {
+                    this.addChatMessage("❤️ SuperFan ❤️", "best stream ever!");
+                }
+            }, 15000);
+        }
+        
+        stop() {
+            this.isActive = false;
+            if (this.chatInterval) clearInterval(this.chatInterval);
+        }
+    }
+    
+    let activeChat = null;
     
     const models = [
         { name: "Linda", video: "https://cdn2.videy.co/fyuZn2iN1.mp4", live: true, hd: true, viewers: "2.3k" },
@@ -865,20 +1089,56 @@
                 imageDiv.appendChild(hdTag);
             }
             
-            // Tombol Unblur - akan redirect ke Adsterra
+            // Tombol Unblur
             const unblurButton = document.createElement('div');
             unblurButton.className = 'unblur-btn';
             unblurButton.innerHTML = '🔓 Click to Unblur';
             unblurButton.style.pointerEvents = 'auto';
             
-            // Overlay blur (tanpa teks)
+            // Overlay blur
             const blurOverlay = document.createElement('div');
             blurOverlay.className = 'blur-overlay';
-            // Tidak ada teks di dalam overlay
             
             imageDiv.appendChild(videoElement);
             imageDiv.appendChild(blurOverlay);
             imageDiv.appendChild(unblurButton);
+            
+            // KHUSUS VIDEO PERTAMA: Tambahkan Live Chat Overlay, Live Indicator, dan Viewer Counter
+            if (index === 0 && containerId === 'featuredModels') {
+                // Live indicator
+                const liveIndicator = document.createElement('div');
+                liveIndicator.className = 'live-indicator';
+                liveIndicator.innerHTML = 'LIVE';
+                imageDiv.appendChild(liveIndicator);
+                
+                // Viewer counter (dinamis)
+                const viewerCounter = document.createElement('div');
+                viewerCounter.className = 'viewer-counter';
+                viewerCounter.innerHTML = `<i class="fas fa-eye"></i> <span class="viewer-count">${model.viewers}</span> watching`;
+                imageDiv.appendChild(viewerCounter);
+                
+                // Chat overlay container
+                const chatOverlay = document.createElement('div');
+                chatOverlay.className = 'live-chat-overlay';
+                imageDiv.appendChild(chatOverlay);
+                
+                // Simpan reference untuk memulai fake chat setelah card ditambahkan ke DOM
+                setTimeout(() => {
+                    if (activeChat) activeChat.stop();
+                    activeChat = new FakeLiveChat(chatOverlay, model.name);
+                    
+                    // Update viewer count random setiap 10 detik
+                    setInterval(() => {
+                        if (viewerCounter && viewerCounter.querySelector('.viewer-count')) {
+                            const currentCount = parseInt(viewerCounter.querySelector('.viewer-count').innerText);
+                            const change = Math.floor(Math.random() * 200) - 50;
+                            let newCount = currentCount + change;
+                            if (newCount < 500) newCount = 500 + Math.floor(Math.random() * 300);
+                            viewerCounter.querySelector('.viewer-count').innerText = newCount.toLocaleString();
+                        }
+                    }, 10000);
+                }, 100);
+            }
             
             const infoDiv = document.createElement('div');
             infoDiv.className = 'model-info';
@@ -893,13 +1153,13 @@
             card.appendChild(imageDiv);
             card.appendChild(infoDiv);
             
-            // Event untuk tombol unblur - REDIRECT LANGSUNG ke Adsterra
+            // Event unblur button
             unblurButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 handleUnblurClick('unblur_button');
             });
             
-            // Event untuk card (klik area selain tombol) - juga redirect
+            // Event card click
             card.addEventListener('click', (e) => {
                 if (e.target === unblurButton || unblurButton.contains(e.target)) {
                     return;
@@ -912,8 +1172,7 @@
             container.appendChild(card);
         });
         
-        // Setelah semua card selesai, video pertama otomatis tidak blur (CSS sudah handle)
-        // Tapi kita juga perlu sembunyikan overlay blur dan tombol unblur pada video pertama
+        // Sembunyikan tombol unblur dan overlay blur pada video pertama
         setTimeout(() => {
             const firstCard = container.querySelector('.model-card:first-child');
             if (firstCard) {
